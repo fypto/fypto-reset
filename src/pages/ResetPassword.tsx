@@ -1,4 +1,4 @@
-import React, { useState } from "react"
+import React, { useState, useEffect } from "react"
 import { useNavigate, useSearchParams } from "react-router-dom"
 import { Card, CardContent } from "@/components/ui/card"
 import { Label } from "@/components/ui/label"
@@ -7,8 +7,15 @@ import { Button } from "@/components/ui/button"
 import { Alert, AlertDescription } from "@/components/ui/alert"
 import { Eye, EyeOff } from "lucide-react"
 import axios from "axios"
+import { jwtDecode } from "jwt-decode"
 
 const API_BASE_URL = import.meta.env.VITE_API_BASE_URL
+
+interface JwtPayload {
+  exp?: number
+  iat?: number
+  [key: string]: any
+}
 
 export const getPasswordCriteriaStatus = (
   password: string,
@@ -79,7 +86,6 @@ const PasswordCriteria: React.FC<{
 const ResetPassword: React.FC = () => {
   const [searchParams] = useSearchParams()
   const token = searchParams.get("token")
-
   const navigate = useNavigate()
 
   const [password, setPassword] = useState("")
@@ -90,6 +96,29 @@ const ResetPassword: React.FC = () => {
   const [success, setSuccess] = useState("")
 
   const { allValid } = getPasswordCriteriaStatus(password, confirmPassword)
+
+  // 🔹 Token Expiry Check
+  useEffect(() => {
+    if (!token) {
+      navigate("/expired")
+      return
+    }
+
+    try {
+      const decoded = jwtDecode<JwtPayload>(token)
+      if (!decoded.exp) {
+        navigate("/expired")
+        return
+      }
+
+      const currentTime = Math.floor(Date.now() / 1000)
+      if (decoded.exp < currentTime) {
+        navigate("/expired")
+      }
+    } catch (err) {
+      navigate("/expired")
+    }
+  }, [token, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -121,7 +150,7 @@ const ResetPassword: React.FC = () => {
         setSuccess("Password reset successful. You can now log in.")
         setTimeout(() => {
           navigate("/")
-        }, 2000) // 2 seconds
+        }, 2000)
       } else {
         setError("Unexpected response from the server.")
       }
@@ -141,6 +170,11 @@ const ResetPassword: React.FC = () => {
   return (
     <div className="min-h-screen flex items-center justify-center bg-muted px-4">
       <Card className="w-full max-w-md p-6">
+        <img
+          src="/logo.png"
+          alt="Logo"
+          className="w-20 rounded-2xl h-20 mx-auto"
+        />
         <CardContent className="space-y-4">
           <h2 className="text-2xl font-semibold text-center">
             Reset Your Password
