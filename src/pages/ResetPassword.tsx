@@ -72,13 +72,15 @@ const PasswordCriteria: React.FC<{
           {ruleStates[index] ? "✅" : "❌"} {label}
         </li>
       ))}
-      <li
-        className={`flex items-center gap-2 ${
-          passwordsMatch ? "text-green-600" : "text-red-500"
-        }`}
-      >
-        {passwordsMatch ? "✅" : "❌"} Passwords match
-      </li>
+      {password.length > 0 && (
+        <li
+          className={`flex items-center gap-2 ${
+            passwordsMatch ? "text-green-600" : "text-red-500"
+          }`}
+        >
+          {passwordsMatch ? "✅" : "❌"} Passwords match
+        </li>
+      )}
     </ul>
   )
 }
